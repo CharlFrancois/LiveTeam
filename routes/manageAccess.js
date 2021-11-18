@@ -15,7 +15,8 @@ router.get("/fetch-enterprise", async (req, res) => {
 
 router.post("/check-access-group", async (req, res) => {
   let { enterprise, user, groupe } = req.query;
-  db.collection("Enterprises/" + enterprise + "/GROUPES")
+  if (enterprise && user && groupe) {
+    db.collection("Enterprises/" + enterprise + "/GROUPES")
     .get()
     .then((subCollectionSnapshot) => {
       subCollectionSnapshot.forEach((subDoc) => {
@@ -27,39 +28,45 @@ router.post("/check-access-group", async (req, res) => {
             });
           } else {
             db.collection("Enterprises/" + enterprise + "/USERS")
-              .get()
-              .then((subCollectionSnapshot) => {
-                subCollectionSnapshot.forEach((subDoc) => {
-                  if (user === subDoc.id) {
-                    if (subDoc.data?.accessGranted) {
-                      subDoc.data().accessGranted.forEach((grpGranted) => {
-                        if (grpGranted === groupe) {
-                          return res.json({
-                            hasAccess: true,
-                            message: "L'utilisateur a accès au groupe",
-                          });
-                        } else {
-                          return res.json({
-                            hasAccess: false,
-                            message: "L'utilisateur n'a pas accès au groupe",
-                          });
-                        }
-                      });
-                    } else {
-                      return res.json({
-                        hasAccess: false,
-                        message: "L'utilisateur n'a pas accès au groupe",
-                      });
-                    }
+            .get()
+            .then((subCollectionSnapshot) => {
+              subCollectionSnapshot.forEach((subDoc) => {
+                if (user === subDoc.id) {
+                  if (subDoc.data?.accessGranted) {
+                    subDoc.data().accessGranted.forEach((grpGranted) => {
+                      if (grpGranted === groupe) {
+                        return res.json({
+                          hasAccess: true,
+                          message: "L'utilisateur a accès au groupe",
+                        });
+                      } else {
+                        return res.json({
+                          hasAccess: false,
+                          message: "L'utilisateur n'a pas accès au groupe",
+                        });
+                      }
+                    });
+                  } else {
+                    return res.json({
+                      hasAccess: false,
+                      message: "L'utilisateur n'a pas accès au groupe",
+                    });
                   }
-                });
+                }
               });
+            });
           }
         }
       });
     });
-});
-
+  } else {
+    return res.json({
+      hasAccess: false,
+      message: "Les 3 paramètres sont nécessaire",
+    });
+  }
+  });
+  
 router.post("/access-files", async (req, res) => {
   let { incomingId, outgoingId, enterprise } = req.query;
   db.collection("Enterprises/" + enterprise + "/FILES")
