@@ -1,2 +1,2 @@
 # LiveTeam
-Mange access in node JS
+Manage access in node JS
